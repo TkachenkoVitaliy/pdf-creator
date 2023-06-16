@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  pdf_creator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DOCKER_BUILDKIT: 1
+    ports:
+      - "8080:8080"
+    image: pdf_creator/latest
+    restart: unless-stopped
