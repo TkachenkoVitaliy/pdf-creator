@@ -1,5 +1,6 @@
 package ru.vtkachenko.pdfcreator.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,6 +15,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 
+@Slf4j
 @Service
 public class FileStorageService {
 
@@ -22,6 +24,7 @@ public class FileStorageService {
         Path tempFolder = Path.of(System.getProperty("java.io.tmpdir"));
         String originalFilename = uploadedFile.getOriginalFilename();
         if (originalFilename == null) {
+            log.warn("File without original filename. Uploadedfile.getName - {}", uploadedFile.getName());
             throw new IllegalFileException("Can't store file without original filename");
         }
         String fileExtension = FileUtils.getFileExtension(originalFilename);
@@ -29,6 +32,7 @@ public class FileStorageService {
         if (ACCEPTABLE_EXTENSIONS.contains(fileExtension)) {
             Path tempFile = tempFolder.resolve(uploadedFile.getOriginalFilename());
             Files.copy(uploadedFile.getInputStream(), tempFile, StandardCopyOption.REPLACE_EXISTING);
+            log.info("Saved file. Filename - {}. Path - {}", originalFilename, tempFile);
             return tempFile;
         } else {
             throw new UnsupportedFileExtensionException(

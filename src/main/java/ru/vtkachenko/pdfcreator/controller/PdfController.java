@@ -1,6 +1,7 @@
 package ru.vtkachenko.pdfcreator.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.actuate.autoconfigure.observation.ObservationProperties;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -46,15 +47,24 @@ public class PdfController {
                     .contentType(MediaType.APPLICATION_PDF)
                     .body(resource);
         } catch (IOException | InterruptedException e) {
-            // TODO: сделать нормальную обработку ошибок
-            throw new RuntimeException(e);
-        } catch (UnsupportedFileExtensionException e) {
-            log.error(e.getMessage());
+            log.error("IO or Interrupted Exception - {}", e.getMessage());
             e.printStackTrace();
-            return new ResponseEntity<>(new ExceptionBody(e.getMessage()), new HttpHeaders(), HttpStatus.UNPROCESSABLE_ENTITY);
+            return new ResponseEntity<>(
+                    new ExceptionBody("Unexpected error"),
+                    new HttpHeaders(),
+                    HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        } catch (UnsupportedFileExtensionException e) {
+            log.warn(e.getMessage());
+            e.printStackTrace();
+            return new ResponseEntity<>(
+                    new ExceptionBody(e.getMessage()),
+                    new HttpHeaders(),
+                    HttpStatus.UNPROCESSABLE_ENTITY);
         } finally {
             if (convertedFile != null) {
                 fileStorageService.deleteFileWithParentDirectory(convertedFile);
+                log.info("Temp converted file has been deleted - {}", convertedFile);
             }
         }
     }

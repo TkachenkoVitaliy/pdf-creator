@@ -34,10 +34,9 @@ public class ConvertService {
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-        // TODO: заменить System.out.println на logger
         String line;
         while((line = reader.readLine()) != null) {
-            log.info("< libreoffice stdout+stderr > {}", line);
+            log.debug("< libreoffice stdout+stderr > {}", line);
         }
         process.waitFor();
         Path convertedFile = tempDir.resolve(FileUtils.changeFileExtensionInName(inputFileName, PDF_EXTENSION));
