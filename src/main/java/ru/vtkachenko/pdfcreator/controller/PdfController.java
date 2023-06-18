@@ -1,13 +1,11 @@
 package ru.vtkachenko.pdfcreator.controller;
 
-import org.springframework.core.env.Environment;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import ru.vtkachenko.pdfcreator.exception.UnsupportedFileExtensionException;
 import ru.vtkachenko.pdfcreator.service.ConvertService;
 import ru.vtkachenko.pdfcreator.service.FileStorageService;
 
@@ -15,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/to-pdf")
 public class PdfController {
@@ -27,8 +26,8 @@ public class PdfController {
     }
 
     @PostMapping
-    public ResponseEntity<Resource> convertToPdf(@RequestParam MultipartFile uploadedFile) {
-
+    public ResponseEntity<Object> convertToPdf(@RequestParam MultipartFile uploadedFile) {
+        log.info("Start converting file to pdf. Filename - {}, Filesize - {}KB", uploadedFile.getOriginalFilename(), uploadedFile.getSize()/1_000);
         Path convertedFile = null;
         try {
             Path tempUploadedFile = fileStorageService.storeFile(uploadedFile);
@@ -41,10 +40,18 @@ public class PdfController {
 
             ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(convertedFile));
 
-            return ResponseEntity.ok().headers(headers).contentLength(convertedFile.toFile().length()).contentType(MediaType.APPLICATION_PDF).body(resource);
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .contentLength(convertedFile.toFile().length())
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(resource);
         } catch (IOException | InterruptedException e) {
             // TODO: сделать нормальную обработку ошибок
             throw new RuntimeException(e);
+        } catch (UnsupportedFileExtensionException e) {
+            log.error(e.getMessage());
+            e.printStackTrace();
+            return new ResponseEntity<>(new ExceptionBody(e.getMessage()), new HttpHeaders(), HttpStatus.UNPROCESSABLE_ENTITY);
         } finally {
             if (convertedFile != null) {
                 fileStorageService.deleteFileWithParentDirectory(convertedFile);

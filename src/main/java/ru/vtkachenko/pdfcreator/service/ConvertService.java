@@ -1,5 +1,6 @@
 package ru.vtkachenko.pdfcreator.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.vtkachenko.pdfcreator.util.FileUtils;
 
@@ -10,6 +11,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+@Slf4j
 @Service
 public class ConvertService {
 
@@ -27,8 +29,6 @@ public class ConvertService {
                 "--outdir", tempDir.toAbsolutePath().toString()
         );
 
-        System.out.println(inputFile.getAbsolutePath() + "\n" + tempDir.toAbsolutePath().toString());
-
         processBuilder.redirectErrorStream(true);
         Process process = processBuilder.start();
 
@@ -37,12 +37,18 @@ public class ConvertService {
         // TODO: заменить System.out.println на logger
         String line;
         while((line = reader.readLine()) != null) {
-            System.out.println("[libreoffice stdout+stderr] " + line);
+            log.info("< libreoffice stdout+stderr > {}", line);
         }
         process.waitFor();
-        System.out.println("converted " + tempDir);
+        Path convertedFile = tempDir.resolve(FileUtils.changeFileExtensionInName(inputFileName, PDF_EXTENSION));
+        log.info("LibreOffice converted - {}", convertedFile);
 
-        inputFile.delete();
-        return tempDir.resolve(FileUtils.changeFileExtensionInName(inputFileName, PDF_EXTENSION));
+        boolean isTempFileDeleted = inputFile.delete();
+        if (isTempFileDeleted) {
+            log.info("Temp file has been deleted - {}", inputFile);
+        } else {
+            log.warn("Can't delete temp file - {}", inputFile);
+        }
+        return convertedFile;
     }
 }

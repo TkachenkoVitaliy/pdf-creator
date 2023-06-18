@@ -18,7 +18,7 @@ import java.util.List;
 public class FileStorageService {
 
     private static final List<String> ACCEPTABLE_EXTENSIONS = Arrays.asList("xls", "xlsx", "doc", "docx");
-    public Path storeFile(MultipartFile uploadedFile) throws IOException {
+    public Path storeFile(MultipartFile uploadedFile) throws IOException, UnsupportedFileExtensionException {
         Path tempFolder = Path.of(System.getProperty("java.io.tmpdir"));
         String originalFilename = uploadedFile.getOriginalFilename();
         if (originalFilename == null) {

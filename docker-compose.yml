@@ -8,6 +8,19 @@ services:
       args:
         DOCKER_BUILDKIT: 1
     ports:
-      - "8080:8080"
+      - "${PORT:-8080}:${PORT:-8080}"
+    volumes:
+      - "log_volume:/logs"
     image: pdf_creator/latest
     restart: unless-stopped
+    environment:
+      - APP_PORT=${PORT:-8080}
+      - APP_LOG_LEVEL=${LOG_LEVEL}
+      - APP_LOG_FILE_LEVEL=${LOG_FILE_LEVEL}
+volumes:
+  log_volume:
+    driver: local
+    driver_opts:
+      type: volume
+      o: bind
+      device: /logs

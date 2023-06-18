@@ -1,6 +1,6 @@
 package ru.vtkachenko.pdfcreator.exception;
 
-public class UnsupportedFileExtensionException extends RuntimeException {
+public class UnsupportedFileExtensionException extends Exception {
 
     public UnsupportedFileExtensionException(String message) {
         super(message);
